@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
-
+- FIX : PHP 8.2 error
 
 
 ## Release 1.4
