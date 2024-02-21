@@ -108,8 +108,8 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 	{
 		global $conf, $user;
 
-		$contexts = explode(':',$parameters['context']);
-		if (in_array('ticketcard',$contexts)) {
+		$contexts = explode(':', $parameters['context']);
+		if (in_array('ticketcard', $contexts)) {
 			// le cas des tickets est particulier il faut faire une évolution pour le gérer à part
 			// Le module attachments fait l. 330 dans class/actions_attachments.class.php :
 			// unset($_POST['modelmailselected']);
@@ -119,8 +119,7 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 
 			return 0;
 		}
-		if ((in_array($action, array('presend', 'send', 'attachments_send', 'confirm_attachments_send', 'confirm_sendmassmail')) || preg_match('/^presend/', $action)) && method_exists($object, 'fetchObjectLinked'))
-		{
+		if ((in_array($action, array('presend', 'send', 'attachments_send', 'confirm_attachments_send', 'confirm_sendmassmail')) || preg_match('/^presend/', $action)) && method_exists($object, 'fetchObjectLinked')) {
 			require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 
 			$hookmanager->initHooks(array('attachmentsform'));
@@ -128,7 +127,7 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 			$this->current_object = $object;
 			if (getDolGlobalString('ATTACHMENTS_INCLUDE_OBJECT_LINKED')) {
 				$this->current_object->fetchObjectLinked();
-				if(!empty($this->current_object->fk_soc)) $fk_soc = $this->current_object->fk_soc ?? 0;
+				if (!empty($this->current_object->fk_soc)) $fk_soc = $this->current_object->fk_soc ?? 0;
 				else $fk_soc = $this->current_object->socid ?? 0;
 				$this->current_object->linkedObjects['societe'][$fk_soc] = $this->current_object->thirdparty;
 			}
@@ -136,40 +135,31 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 			if (empty($this->current_object->linkedObjects[$this->current_object->element])) $this->current_object->linkedObjects[$this->current_object->element] = array();
 			array_unshift($this->current_object->linkedObjects[$this->current_object->element], $this->current_object);
 
-			if (getDolGlobalString('ATTACHMENTS_INCLUDE_PRODUCT_LINES') && !empty($this->current_object->lines))
-			{
-				foreach ($this->current_object->lines as $line)
-				{
-					if (!empty($line->fk_product) && !isset($this->current_object->linkedObjects['product'][$line->fk_product]))
-					{
+			if (getDolGlobalString('ATTACHMENTS_INCLUDE_PRODUCT_LINES') && !empty($this->current_object->lines)) {
+				foreach ($this->current_object->lines as $line) {
+					if (!empty($line->fk_product) && !isset($this->current_object->linkedObjects['product'][$line->fk_product])) {
 						require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 						$product = new Product($this->db);
-						if ($product->fetch($line->fk_product) > 0)
-						{
+						if ($product->fetch($line->fk_product) > 0) {
 							$this->current_object->linkedObjects['product'][$line->fk_product] = $product;
 						}
 					}
 				}
 			}
 
-			if ($this->current_object->element == "project")
-			{
+			if ($this->current_object->element == "project") {
 				$this->current_object->getLinesArray($user);
-				if (!empty($this->current_object->lines))
-				{
+				if (!empty($this->current_object->lines)) {
 					$subdir = '/'.dol_sanitizeFileName($this->current_object->ref);
-					foreach ($this->current_object->lines as $line)
-					{
+					foreach ($this->current_object->lines as $line) {
 						$linkObjRef = dol_sanitizeFileName($line->ref);
 						$filedir = $conf->projet->dir_output . $subdir . '/' . $linkObjRef;
 
 						$file_list=dol_dir_list($filedir, 'files', 0, '', '(\.meta|_preview.*.*\.png)$', 'date', SORT_DESC);
 
-						if (!empty($file_list))
-						{
+						if (!empty($file_list)) {
 							$key = $this->TTileKeyByElement['project_task'];
-							foreach ($file_list as $file_info)
-							{
+							foreach ($file_list as $file_info) {
 								$fullname_md5 = md5($file_info['fullname']);
 								$this->TFilePathByTitleKey[$key][$linkObjRef][$fullname_md5] = array(
 									'name' => $file_info['name']
@@ -183,11 +173,8 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 				}
 			}
 			// Gestion des objets standards
-			foreach ($this->current_object->linkedObjects as $element => $TLinkedObject)
-			{
-
-				if (!getDolGlobalString('ATTACHMENTS_INCLUDE_OBJECT_LINKED') && $element !== 'product' && $element !== $this->current_object->element)
-				{
+			foreach ($this->current_object->linkedObjects as $element => $TLinkedObject) {
+				if (!getDolGlobalString('ATTACHMENTS_INCLUDE_OBJECT_LINKED') && $element !== 'product' && $element !== $this->current_object->element) {
 					// Si la recherche dans les objets liés n'est pas actif et qu'on est pas sur un élément "product" ou de l'objet courant, alors on passe
 					continue;
 				}
@@ -195,23 +182,17 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 				$sub_element_to_use = '';
 				$subdir = '';
 				if ($element === 'fichinter') $element_to_use = 'ficheinter';
-				elseif ($element === 'order_supplier') { $element_to_use = 'fournisseur'; $subdir = '/commande'; }
-				elseif ($element === 'invoice_supplier') { $element_to_use = 'fournisseur'; $sub_element_to_use = 'facture'; /* $subdir is defined in the next loop */ }
-				elseif ($element === 'shipping') {$element_to_use = 'expedition'; $subdir = '/sending';}
-				else if(strpos($element, '_') !== false){
+				elseif ($element === 'order_supplier') { $element_to_use = 'fournisseur'; $subdir = '/commande'; } elseif ($element === 'invoice_supplier') { $element_to_use = 'fournisseur'; $sub_element_to_use = 'facture'; /* $subdir is defined in the next loop */ } elseif ($element === 'shipping') {$element_to_use = 'expedition'; $subdir = '/sending';} elseif (strpos($element, '_') !== false) {
 					$part = explode('_', $element);
-					if(count($part)>1){
+					if (count($part)>1) {
 						$element_to_use = $part[0];
 						$sub_element_to_use = $part[1];
-					}
-					else { $element_to_use = $element;}
-				}
-				else { $element_to_use = $element; }
+					} else { $element_to_use = $element;}
+				} else { $element_to_use = $element; }
 
 				/** @var CommonObject $linkedObject */
-				foreach ($TLinkedObject as $linkedObject)
-				{
-					if(empty($linkedObject)){
+				foreach ($TLinkedObject as $linkedObject) {
+					if (empty($linkedObject)) {
 						continue;
 					}
 
@@ -227,26 +208,26 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 					//  J'ai pris le partie de skip si incompatible.
 					if (!empty($sub_element_to_use) && !empty($conf->{$element_to_use}) && !empty($conf->{$element_to_use}->{$sub_element_to_use})) {
 						$filedir = $conf->{$element_to_use}->{$sub_element_to_use}->dir_output . $subdir . '/' . $linkObjRef;
-					}
-					elseif(!empty( $conf->{$element_to_use}->dir_output)){
+					} elseif (!empty($conf->{$element_to_use}->dir_output)) {
 						$filedir = $conf->{$element_to_use}->dir_output . $subdir . '/' . $linkObjRef;
-					}
-					else{
+					} else {
 						continue;
 					}
 
-					if ($element == 'product' && getDolGlobalString('PRODUCT_USE_OLD_PATH_FOR_PHOTO'))
-					{
+					if ($element == 'product' && getDolGlobalString('PRODUCT_USE_OLD_PATH_FOR_PHOTO')) {
 						$pdir = get_exdir($linkedObject->id, 2, 0, 0, $linkedObject, 'product') . $linkedObject->id ."/photos/";
 						$filedir = $conf->product->dir_output.'/'.$pdir;
 					}
 
 					$file_list=dol_dir_list($filedir, 'files', 0, '', '(\.meta|_preview.*.*\.png)$', 'date', SORT_DESC);
-					if (!empty($file_list))
-					{
+					if (!empty($file_list)) {
+						if (!array_key_exists($element, $this->TTileKeyByElement)) {
+							$this->TTileKeyByElement += [$element => 'AttachmentsTitle'.ucfirst($element)];
+						}
+
 						$key = $this->TTileKeyByElement[$element];
-						foreach ($file_list as $file_info)
-						{
+
+						foreach ($file_list as $file_info) {
 							$fullname_md5 = md5($file_info['fullname']);
 							$this->TFilePathByTitleKey[$key][$linkObjRefKey][$fullname_md5] = array(
 								'name' => $file_info['name']
@@ -259,12 +240,10 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 				}
 			}
 
-			if (!empty($conf->ecm->enabled) && getDolGlobalInt('ATTACHMENTS_ECM_SCANDIR') > 0)
-			{
+			if (!empty($conf->ecm->enabled) && getDolGlobalInt('ATTACHMENTS_ECM_SCANDIR') > 0) {
 				require_once DOL_DOCUMENT_ROOT.'/ecm/class/ecmdirectory.class.php';
 				$ecmdir = new EcmDirectory($this->db);
-				if ($ecmdir->fetch(getDolGlobalInt('ATTACHMENTS_ECM_SCANDIR')) > 0)
-				{
+				if ($ecmdir->fetch(getDolGlobalInt('ATTACHMENTS_ECM_SCANDIR')) > 0) {
 					$fullpathselecteddir = $conf->ecm->dir_output.'/'.$ecmdir->getRelativePath();
 					$key = $this->TTileKeyByElement['ecm'];
 
@@ -275,45 +254,37 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 			// Surcharge pour les modules externes
 			$parameters['TFilePathByTitleKey'] = $this->TFilePathByTitleKey;
 			$reshook = $hookmanager->executeHooks('attachMoreFiles', $parameters, $this->current_object, $action); // Note that $action and $object may have been modified by some hooks
-			if (empty($reshook))
-			{
-				if (is_array($hookmanager->resArray) && count($hookmanager->resArray))
-				{
+			if (empty($reshook)) {
+				if (is_array($hookmanager->resArray) && count($hookmanager->resArray)) {
 					// TODO voir si "array_merge_recursive" correspond au comportement attendu
 					$this->TFilePathByTitleKey = array_merge_recursive($this->TFilePathByTitleKey, $hookmanager->resArray);
 				}
-			}
-			elseif ($reshook > 0) $this->TFilePathByTitleKey = $hookmanager->resArray;
+			} elseif ($reshook > 0) $this->TFilePathByTitleKey = $hookmanager->resArray;
 
 
 			$param = array('TTileKeyRank' => $this->TTileKeyRank);
 			$reshook = $hookmanager->executeHooks('attachSort', $param, $this->TFilePathByTitleKey, $action); // Note that $action and $object may have been modified by some hooks
-			if (empty($reshook))
-			{
+			if (empty($reshook)) {
 				uksort($this->TFilePathByTitleKey, array($this, 'cmp'));
 			}
 
 
-			if ($action === 'attachments_send')
-			{
+			if ($action === 'attachments_send') {
 				dol_include_once('attachments/lib/attachments.lib.php');
 				$this->formconfirm = getFormConfirmAttachments($this, $this->TFilePathByTitleKey, GETPOST('trackid', 'none'));
 				$action = 'presend';
 				$_POST['addfile'] = ''; // Permet de bi-passer un setEventMessage de Dolibarr
 			}
 			// Gestion de l'envoi des données provenant du formconfirm
-			elseif ($action === 'confirm_attachments_send')
-			{
+			elseif ($action === 'confirm_attachments_send') {
 				// Hack permettant de conserver le text car la méthode "get_form()" cherche uniquement dans $_POST, 2 cas particuliers
-//                $_POST['message'] = $_GET['message'];
-//                $_POST['subject'] = $_GET['subject']; // Hack plus nécessaire suite aux changements de la fonction "getFormConfirmAttachments" et à l'utilisation d'un formulaire en POST
+				//                $_POST['message'] = $_GET['message'];
+				//                $_POST['subject'] = $_GET['subject']; // Hack plus nécessaire suite aux changements de la fonction "getFormConfirmAttachments" et à l'utilisation d'un formulaire en POST
 
 				$TAttachments = array();
-				foreach ($_REQUEST as $k => $v)
-				{
+				foreach ($_REQUEST as $k => $v) {
 					// On provient d'un formconfirm, et il n'est pas possible de faire passer des tableaux de valeur
-					if (preg_match('/^TAttachments\_[a-f0-9]{32}$/', $k) && !empty($v))
-					{
+					if (preg_match('/^TAttachments\_[a-f0-9]{32}$/', $k) && !empty($v)) {
 						$TAttachments[$v] = $v;
 					}
 				}
@@ -329,26 +300,19 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 				// Set tmp user directory
 				$vardir=$conf->user->dir_output."/".$user->id;
 				$upload_dir_tmp = $vardir.'/temp';
-				if (dol_mkdir($upload_dir_tmp) >= 0)
-				{
-					foreach ($this->TFilePathByTitleKey as $titleKey => $TFilePathByRef)
-					{
+				if (dol_mkdir($upload_dir_tmp) >= 0) {
+					foreach ($this->TFilePathByTitleKey as $titleKey => $TFilePathByRef) {
 						if (!is_array($TFilePathByRef)) continue;
-						foreach ($TFilePathByRef as $ref => $file_info)
-						{
+						foreach ($TFilePathByRef as $ref => $file_info) {
 							if (!is_array($file_info)) continue;
-							foreach ($file_info as $info)
-							{
-								if (isset($TAttachments[$info['fullname_md5']]))
-								{
+							foreach ($file_info as $info) {
+								if (isset($TAttachments[$info['fullname_md5']])) {
 									$destfull = $upload_dir_tmp.'/'.$info['name'];
 									dol_copy($info['fullname'], $destfull);
 
 									// Update session
 									$formmail->add_attached_files($destfull, $info['name'], mime_content_type($info['fullname']));
-								}
-								elseif (($k = array_search($info['name'], $TSelectedFileName)) !== false)
-								{
+								} elseif (($k = array_search($info['name'], $TSelectedFileName)) !== false) {
 									// Fichier précédemment joint et maintenant il a été décoché
 									$formmail->remove_attached_files($k);
 									if (is_file($upload_dir_tmp.'/'.$info['name'])) unlink($upload_dir_tmp.'/'.$info['name']);
@@ -364,11 +328,9 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 				$_GET['addfile'] = ''; // Permet de bi-passer un setEventMessage de Dolibarr
 			}
 
-			if (!empty($this->TFilePathByTitleKey))
-			{
+			if (!empty($this->TFilePathByTitleKey)) {
 				$modelmailselected = GETPOST('modelmailselected', 'alpha');
-				if ($modelmailselected != -1)
-				{
+				if ($modelmailselected != -1) {
 					// Permet d'esquiver l'appel à "clear_attached_files()" dans la méthode "get_form()" @see
 
 					/*
@@ -376,7 +338,7 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 					 * TODO : Trouver une solution afin que "clear_attached_files()" puisse ne supprimer que les fichiers ajoutés en automatique.
 					 *  FIX limité à aux versions inférieur à 14, à modifier en conséquence si besoin.
 					 */
-					if (intval(DOL_VERSION) < 14){
+					if (intval(DOL_VERSION) < 14) {
 						unset($_GET['modelmailselected']);
 						unset($_POST['modelmailselected']);
 					}
@@ -385,7 +347,6 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 			}
 
 			$this->action = $action;
-
 		}
 		return 0;
 	}
@@ -401,15 +362,13 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 	 */
 	public function getFormMail($parameters, &$object, &$action, $hookmanager)
 	{
-		$contexts = explode(':',$parameters['context']);
-		if (in_array('ticketcard',$contexts)) {
+		$contexts = explode(':', $parameters['context']);
+		if (in_array('ticketcard', $contexts)) {
 			return 0; // le cas des tickets est particulier il faut faire une évolution pour le gérer à part
 		}
 
-		if (in_array($this->action, array('presend', 'send', 'confirm_sendmassmail')) || preg_match('/^presend/', $this->action))
-		{
-			if (!empty($this->TFilePathByTitleKey))
-			{
+		if (in_array($this->action, array('presend', 'send', 'confirm_sendmassmail')) || preg_match('/^presend/', $this->action)) {
+			if (!empty($this->TFilePathByTitleKey)) {
 				print '
 					<script type="text/javascript">
 						$(function() {
@@ -434,8 +393,7 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 
 				if (!empty($this->formconfirm)) print $this->formconfirm;
 
-				if (!empty($this->modelmailselected))
-				{
+				if (!empty($this->modelmailselected)) {
 					$object->param['models_id'] = $this->modelmailselected;
 				}
 			}
@@ -456,8 +414,7 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 		if (isset($this->TTileKeyRank[$a]) && isset($this->TTileKeyRank[$b])) return $this->TTileKeyRank[$a] - $this->TTileKeyRank[$b];
 		elseif (isset($this->TTileKeyRank[$a])) return -1;
 		elseif (isset($this->TTileKeyRank[$b])) return 1;
-		else
-		{
+		else {
 			return strcmp($langs->trans($a), $langs->trans($b));
 		}
 	}
@@ -470,21 +427,16 @@ class ActionsAttachments extends \attachments\RetroCompatCommonHookActions
 	 */
 	private function nyandog($key, $fullpathselecteddir, $dir = '')
 	{
-		if (is_dir($fullpathselecteddir))
-		{
+		if (is_dir($fullpathselecteddir)) {
 			$files = @scandir($fullpathselecteddir);
-			foreach ($files as $file)
-			{
+			foreach ($files as $file) {
 				if ($file == '.' || $file == '..') continue;
 
 				$fullname = $fullpathselecteddir.$file;
 
-				if (is_dir($fullname))
-				{
+				if (is_dir($fullname)) {
 					$this->nyandog($key, $fullname, $file);
-				}
-				elseif (is_file($fullname))
-				{
+				} elseif (is_file($fullname)) {
 					$fullname_md5 = md5($fullname);
 					$name = pathinfo($fullname, PATHINFO_BASENAME);
 					$this->TFilePathByTitleKey[$key][$dir][$fullname_md5] = array(

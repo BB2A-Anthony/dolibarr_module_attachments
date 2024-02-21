@@ -25,34 +25,34 @@
 
 function attachmentsAdminPrepareHead()
 {
-    global $langs, $conf;
+	global $langs, $conf;
 
-    $langs->load("attachments@attachments");
+	$langs->load("attachments@attachments");
 
-    $h = 0;
-    $head = array();
+	$h = 0;
+	$head = array();
 
-    $head[$h][0] = dol_buildpath("/attachments/admin/attachments_setup.php", 1);
-    $head[$h][1] = $langs->trans("Parameters");
-    $head[$h][2] = 'settings';
-    $h++;
-    $head[$h][0] = dol_buildpath("/attachments/admin/attachments_about.php", 1);
-    $head[$h][1] = $langs->trans("About");
-    $head[$h][2] = 'about';
-    $h++;
+	$head[$h][0] = dol_buildpath("/attachments/admin/attachments_setup.php", 1);
+	$head[$h][1] = $langs->trans("Parameters");
+	$head[$h][2] = 'settings';
+	$h++;
+	$head[$h][0] = dol_buildpath("/attachments/admin/attachments_about.php", 1);
+	$head[$h][1] = $langs->trans("About");
+	$head[$h][2] = 'about';
+	$h++;
 
-    // Show more tabs from modules
-    // Entries must be declared in modules descriptor with line
-    //$this->tabs = array(
-    //	'entity:+tabname:Title:@attachments:/attachments/mypage.php?id=__ID__'
-    //); // to add new tab
-    //$this->tabs = array(
-    //	'entity:-tabname:Title:@attachments:/attachments/mypage.php?id=__ID__'
-    //); // to remove a tab
+	// Show more tabs from modules
+	// Entries must be declared in modules descriptor with line
+	//$this->tabs = array(
+	//	'entity:+tabname:Title:@attachments:/attachments/mypage.php?id=__ID__'
+	//); // to add new tab
+	//$this->tabs = array(
+	//	'entity:-tabname:Title:@attachments:/attachments/mypage.php?id=__ID__'
+	//); // to remove a tab
 	$object = new stdClass;
-    complete_head_from_modules($conf, $langs, $object, $head, $h, 'attachments');
+	complete_head_from_modules($conf, $langs, $object, $head, $h, 'attachments');
 
-    return $head;
+	return $head;
 }
 
 /**
@@ -63,19 +63,19 @@ function attachmentsAdminPrepareHead()
  */
 function attachments_prepare_head(Attachments $object)
 {
-    global $langs, $conf;
-    $h = 0;
-    $head = array();
-    $head[$h][0] = dol_buildpath('/attachments/card.php', 1).'?id='.$object->id;
-    $head[$h][1] = $langs->trans("AttachmentsCard");
-    $head[$h][2] = 'card';
-    $h++;
+	global $langs, $conf;
+	$h = 0;
+	$head = array();
+	$head[$h][0] = dol_buildpath('/attachments/card.php', 1).'?id='.$object->id;
+	$head[$h][1] = $langs->trans("AttachmentsCard");
+	$head[$h][2] = 'card';
+	$h++;
 
 	// Show more tabs from modules
-    // Entries must be declared in modules descriptor with line
-    // $this->tabs = array('entity:+tabname:Title:@attachments:/attachments/mypage.php?id=__ID__');   to add new tab
-    // $this->tabs = array('entity:-tabname:Title:@attachments:/attachments/mypage.php?id=__ID__');   to remove a tab
-    complete_head_from_modules($conf, $langs, $object, $head, $h, 'attachments');
+	// Entries must be declared in modules descriptor with line
+	// $this->tabs = array('entity:+tabname:Title:@attachments:/attachments/mypage.php?id=__ID__');   to add new tab
+	// $this->tabs = array('entity:-tabname:Title:@attachments:/attachments/mypage.php?id=__ID__');   to remove a tab
+	complete_head_from_modules($conf, $langs, $object, $head, $h, 'attachments');
 
 	return $head;
 }
@@ -88,71 +88,70 @@ function attachments_prepare_head(Attachments $object)
  */
 function getFormConfirmAttachments($actionattachments, $TFilePathByTitleKey, $trackid = null)
 {
-    global $db, $langs;
+	global $db, $langs;
 
-    if (empty($TFilePathByTitleKey)) return '';
+	if (empty($TFilePathByTitleKey)) return '';
 
-    $object = $actionattachments->current_object;
+	$object = $actionattachments->current_object;
 
-    $langs->load('attachments@attachments');
-    $form = new Form($db);
+	$langs->load('attachments@attachments');
+	$form = new Form($db);
 
-    $formquestion = array();
+	$formquestion = array();
 
-    $moreparam = array();
+	$moreparam = array();
 
-    foreach ($_REQUEST as $k => $v)
-    {
-        if (in_array($k, array('action', 'token', 'id'))) continue;
-        $moreparam[$k] = $v;
-    }
+	foreach ($_REQUEST as $k => $v) {
+		if (in_array($k, array('action', 'token', 'id'))) continue;
+		$moreparam[$k] = $v;
+	}
 
-    // Je ne peux pas me baser sur le chemin complet car une fois joint au mail, les chemins pointe vers le dossier "/temp" du user
-    $TSelectedFileName = array();
-    if (!empty($_SESSION['listofnames-'.$trackid])) $TSelectedFileName = array_flip(explode(';', $_SESSION['listofnames-'.$trackid]));
+	// Je ne peux pas me baser sur le chemin complet car une fois joint au mail, les chemins pointe vers le dossier "/temp" du user
+	$TSelectedFileName = array();
+	if (!empty($_SESSION['listofnames-'.$trackid])) $TSelectedFileName = array_flip(explode(';', $_SESSION['listofnames-'.$trackid]));
 
-    $html = '
+	$html = '
         <div>
             <i class="fa fa-search"></i>
             <input type="text" id="attachments-item-filter" class="search-filter" data-target="" value="" placeholder="Rechercher" <span="">
             <span id="attachments-filter-count-wrap" >'.$langs->trans('Result').': <span id="attachments-filter-count" ></span></span>
         </div>';
 
-    $html.= '<dl id="attachments-accordion">';
+	$html.= '<dl id="attachments-accordion">';
 
-    foreach ($TFilePathByTitleKey as $titleKey => $TFilePathByRef) {
-	    $html .= '
+	foreach ($TFilePathByTitleKey as $titleKey => $TFilePathByRef) {
+		$html .= '
             <dt class="title">
                 <b>' . $langs->trans($titleKey) . '</b>
                 <span title="' . $langs->trans('AttachmentsSelectedOnTotalAvailable') . '" class="attachments-element-selected badge badge-secondary" data-element-selected=""></span>
                 <span title="' . $langs->trans('AttachmentsFiltered') . '" class="attachments-element-count badge" data-element-count=""></span>
             </dt>';
 
-	    $html .= '<dd class="panel">';
-	    if (is_array($TFilePathByRef) && count($TFilePathByRef) > 0) {
-		    foreach ($TFilePathByRef as $ref => $file_info) {
-			    $class = $object->ref === $ref ? 'currentobject' : '';
-			    $html .= '
+		$html .= '<dd class="panel">';
+		if (is_array($TFilePathByRef) && count($TFilePathByRef) > 0) {
+			foreach ($TFilePathByRef as $ref => $file_info) {
+				$class = $object->ref === $ref ? 'currentobject' : '';
+				$html .= '
                 <p class="subtitle">
                     <b class="' . $class . '">' . str_repeat('&nbsp;', 4) . $ref . '</b>
                 </p>';
-			    foreach ($file_info as $info) {
-				    $id = 'TAttachments_' . $info['fullname_md5'];
-				    $checked = isset($TSelectedFileName[$info['name']]) ? 'checked' : '';
-				    $html .= '
+				foreach ($file_info as $info) {
+					$id = 'TAttachments_' . $info['fullname_md5'];
+					$checked = isset($TSelectedFileName[$info['name']]) ? 'checked' : '';
+					$html .= '
                     <div class="searchable search-match oddeven">
                         ' . str_repeat('&nbsp;', 8) . '<input id="' . $id . '" name="' . $id . '" type="checkbox" ' . $checked . ' value="' . $info['fullname_md5'] . '" class="pull-right" />
                         <label for="' . $id . '">' . $info['name'] . '</label>
                     </div>';
-				    $formquestion[] = array('name' => 'TAttachments_' . $info['fullname_md5'], 'type' => 'hidden');
-			    }
-		    }
-		    $html .= '</dd>';
-	    }
-    }
-    $html.= '</dl>';
+					$formquestion[] = array('name' => 'TAttachments_' . $info['fullname_md5'], 'type' => 'hidden', 'value' => '');
+				}
+			}
+			$html .= '</dd>';
+		}
+	}
+	$html.= '</dl>';
 
-    $formquestion['text'] = $html.'
+	$formquestion['text'] = $html.'
         <style type="text/css">
             #attachments-accordion .attachments-element-count, #attachments-accordion .attachments-element-selected {
                 margin-left: 8px;
@@ -237,19 +236,19 @@ function getFormConfirmAttachments($actionattachments, $TFilePathByTitleKey, $tr
         </script>
     ';
 
-    $formconfirm = $form->formconfirm(
-        $_SERVER['PHP_SELF'] . '?id=' . $object->id.'&'.http_build_query($moreparam)
-        , $langs->trans('ConfirmCancelAttachmentsTitle')
-        , '<i>'.$langs->trans('ConfirmCancelAttachmentsBody').'</i>'
-        , 'confirm_attachments_send'
-        , $formquestion
-        , 0
-        , 1
-        , 'auto'
-        , '800'
-    );
+	$formconfirm = $form->formconfirm(
+		$_SERVER['PHP_SELF'] . '?id=' . $object->id.'&'.http_build_query($moreparam),
+		 $langs->trans('ConfirmCancelAttachmentsTitle'),
+		 '<i>'.$langs->trans('ConfirmCancelAttachmentsBody').'</i>',
+		 'confirm_attachments_send',
+		 $formquestion,
+		 0,
+		 1,
+		 'auto',
+		 '800'
+	);
 
-    $formconfirm.= '
+	$formconfirm.= '
         <script type="text/javascript">
             function customDialogByPhTouch(uri) {
                 var p = uri.split("?");
@@ -294,7 +293,7 @@ function getFormConfirmAttachments($actionattachments, $TFilePathByTitleKey, $tr
         </script>
     ';
 
-    $formconfirm = str_replace('location.href = urljump;', 'customDialogByPhTouch(urljump);', $formconfirm);
+	$formconfirm = str_replace('location.href = urljump;', 'customDialogByPhTouch(urljump);', $formconfirm);
 
-    return $formconfirm;
+	return $formconfirm;
 }
